@@ -4,9 +4,11 @@ performs preprocessing steps and merges it back.
 '''
 
 import pandas as pd
+import numpy as np
 
 from sklearn import preprocessing
 from sklearn import decomposition
+from sklearn.feature_selection import VarianceThreshold
 from sklearn import feature_selection
 from sklearn import model_selection
 from sklearn import svm
@@ -52,6 +54,32 @@ def scale_data(data_selection, scaler=preprocessing.StandardScaler()):
     data_scaled = scaler.transform(data_selection)
     return data_scaled
 
+def variance_threshold(data, variance_threshold=0.1):
+    '''
+    This function removes features that have low variance.
+    '''
+    selector = VarianceThreshold(threshold=variance_threshold)  # Set the threshold
+    data_threshold = selector.fit_transform(data)
+
+    return data_threshold
+
+def correlation_data(data, correlation_threshold=0.9):
+    '''
+    This function removes features that have a high correlation.
+    '''
+    df_data = pd.DataFrame(data)
+    corr_matrix = df_data.corr().abs()
+
+    to_drop = set()
+    for column in corr_matrix.columns:
+        for correlated_column in corr_matrix.columns:
+            if column != correlated_column and corr_matrix.at[column, correlated_column] > correlation_threshold:
+                to_drop.add(correlated_column)
+                break
+    data_correlation = df_data.drop(columns=to_drop)
+
+    return data_correlation
+
 def pca_data(data):
     '''
     This function performs a PCA analysis on the data.
@@ -89,13 +117,14 @@ def processing_data_scaling(data):
     '''
     data_selection, data_id, df_label = split_data(data) #Splits the data and the label
 
-    data_scaled = scale_data(data_selection, scaler=preprocessing.StandardScaler())
-    # data_pca = pca_data(data_scaled)
+    data_threshold = variance_threshold(data_selection) #Variance threshold
+    data_correlation = correlation_data(data_threshold) #Removes highly correlated data
+
+    data_scaled = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scale the data
 
     data_merged, df_label, df_processed = merge_data(data_selection, data_id, df_label, data_scaled)
     #Merges the processed data and the label
-    #data_rfecv = rfecv_data(df_processed,df_label) #Duurt lang dus ff uitzetten
-    return data_merged, df_label, df_processed#, data_rfecv
+    return data_merged, df_label, df_processed
 
 def processing_data_pca(data):
     '''
@@ -104,8 +133,12 @@ def processing_data_pca(data):
     '''
     data_selection, data_id, df_label = split_data(data) #Splits the data and the label
 
-    data_scaled = scale_data(data_selection, scaler=preprocessing.StandardScaler())
-    data_pca = pca_data(data_scaled)
+    data_threshold = variance_threshold(data_selection) #Variance threshold
+    data_correlation = correlation_data(data_threshold) #Removes highly correlated data
+
+    data_scaled = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scale the data
+
+    data_pca = pca_data(data_scaled) #Reduce dimensions
 
     data_merged, df_label, df_processed = merge_data(data_selection, data_id, df_label, data_pca)
     #Merges the processed data and the label
@@ -118,7 +151,10 @@ def processing_data_rfecv(data):
     '''
     data_selection, data_id, df_label = split_data(data) #Splits the data and the label
 
-    data_scaled = scale_data(data_selection, scaler=preprocessing.StandardScaler())
+    data_threshold = variance_threshold(data_selection) #Variance threshold
+    data_correlation = correlation_data(data_threshold) #Removes highly correlated data
+
+    data_scaled = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scale the data
 
     data_merged, df_label, df_processed = merge_data(data_selection, data_id, df_label, data_scaled)
     #Merges the processed data and the label

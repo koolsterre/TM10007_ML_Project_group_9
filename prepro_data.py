@@ -89,7 +89,7 @@ def pca_data(data):
     pca.fit(data)
     data_pca = pca.transform(data)
 
-    return data_pca
+    return data_pca, pca
 
 def rfecv_data(data,labels):
     '''
@@ -129,20 +129,24 @@ def processing_data_scaling(data):
 def processing_data_pca(data):
     '''
     This function processes the data.
-    First the data is splitted, then processed (scalinga and PCA) and then merged.
+    First the data is splitted, then processed (scaling and PCA) and then merged.
     '''
-    data_selection, data_id, df_label = split_data(data) #Splits the data and the label
+    data_selection, data_id, df_label = split_data(data)  # Splits the data and the label
 
-    data_threshold = variance_threshold(data_selection) #Variance threshold
-    data_correlation = correlation_data(data_threshold) #Removes highly correlated data
+    data_threshold = variance_threshold(data_selection)  # Variance threshold
+    data_correlation = correlation_data(data_threshold)  # Removes highly correlated data
 
-    data_scaled = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scale the data
+    data_scaled = scale_data(data_correlation, scaler=preprocessing.StandardScaler())  # Scale the data
 
-    data_pca = pca_data(data_scaled) #Reduce dimensions
+    data_pca, pca = pca_data(data_scaled)  # Reduce dimensions and get the pca object
+
+    # Now you have both the PCA-transformed data and the pca object
+    print(f"PCA object: {pca}")  # You can access the PCA object here, for example to see explained variance
+    print(f"Explained variance ratio: {pca.explained_variance_ratio_}")
 
     data_merged, df_label, df_processed = merge_data(data_selection, data_id, df_label, data_pca)
-    #Merges the processed data and the label
-    return data_merged, df_label, df_processed
+    # Merges the processed data and the label
+    return data_merged, df_label, df_processed, pca  # Return PCA object along with other data
 
 def processing_data_rfecv(data):
     '''

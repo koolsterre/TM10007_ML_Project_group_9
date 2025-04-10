@@ -5,6 +5,7 @@ performs preprocessing steps and merges it back.
 
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
 
 from sklearn import preprocessing
 from sklearn import decomposition
@@ -102,9 +103,15 @@ def rfecv_data(data,labels):
         estimator=svc, step=1,
         cv=model_selection.StratifiedKFold(4),
         scoring='roc_auc',
-        min_features_to_select=25) #Dit nu een beetje gegokt
+        min_features_to_select=10) #Dit nu een beetje gegokt
     labels = labels.values.ravel() #Makes a 1d array
     rfecv.fit(data, labels) #Fits the rfecv
+    plt.figure()
+    plt.xlabel("Number of features selected")
+    plt.ylabel("Cross validation score (nb of correct classifications)")
+    plt.plot(range(1, len(rfecv.cv_results_["mean_test_score"]) + 1), rfecv.cv_results_["mean_test_score"])
+
+
     selected_features = data.columns[rfecv.support_] #Gets the best number of features
     data_rfecv = data[selected_features] #Gets the best features
     return data_rfecv

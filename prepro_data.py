@@ -133,6 +133,19 @@ def processing_data_scaling(data):
     #Merges the processed data and the label
     return data_merged, df_label, df_processed
 
+def processing_data_scaling_test(data):
+    '''
+    This function processes the test data.
+    First the test data is splitted, then processed (scaling) and then merged.
+    '''
+    data_selection, data_id, df_label = split_data(data) #Splits the data and the label
+
+    data_scaled = scale_data(data_selection, scaler=preprocessing.StandardScaler()) #Scale the data
+
+    data_test_merged, df_label_test, df_processed_test = merge_data(data_selection, data_id, df_label, data_scaled)
+    #Merges the processed data and the label
+    return data_test_merged, df_label_test, df_processed_test
+
 def processing_data_pca(data):
     '''
     This function processes the data.

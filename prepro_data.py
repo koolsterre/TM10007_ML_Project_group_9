@@ -133,6 +133,27 @@ def pca_data(data):
 
     return data_pca, pca
 
+def visualize_rfecv(data,labels):
+    '''
+    This function visualizes the RFECV without a minimum number of features to selecc.
+    The number of features selected is plotted against the cross validation score.
+    '''
+    svc = svm.SVC(kernel="linear")
+    rfecv = feature_selection.RFECV(
+        estimator=svc, step=1,
+        cv=model_selection.StratifiedKFold(4),
+        scoring='roc_auc',
+        min_features_to_select=1)
+    labels = labels.values.ravel() #Makes a 1d array
+    rfecv.fit(data, labels) #Fits the rfecv
+
+    plt.figure()
+    plt.xlabel("Number of features selected")
+    plt.ylabel("Cross validation score (nb of correct classifications)")
+    plt.plot(range(1, len(rfecv.cv_results_["mean_test_score"]) + 1), rfecv.cv_results_["mean_test_score"])
+    plt.axvline(18, color='red', linestyle='--', label=f'Selected features: {rfecv.n_features_}')
+    plt.show()
+
 def rfecv_data(data,labels, features_select=15):
     '''
     This function performs Recursive Feature Elimination with Cross-Validation (RFECV) 
@@ -149,11 +170,6 @@ def rfecv_data(data,labels, features_select=15):
         min_features_to_select=features_select)
     labels = labels.values.ravel() #Makes a 1d array
     rfecv.fit(data, labels) #Fits the rfecv
-
-    plt.figure()
-    plt.xlabel("Number of features selected")
-    plt.ylabel("Cross validation score (nb of correct classifications)")
-    plt.plot(range(1, len(rfecv.cv_results_["mean_test_score"]) + 1), rfecv.cv_results_["mean_test_score"])
 
     selected_features = data.columns[rfecv.support_] #Gets the best number of features
     data_rfecv = pd.DataFrame(rfecv.transform(data), columns=selected_features, index=data.index)
@@ -287,6 +303,8 @@ def processing_data_rfecv(data):
 
     df_label, df_processed = merge_data(data_correlation, data_id, df_label, data_scaled)
     #Merges the processed data and the label
+
+    visualize_rfecv(df_processed, df_label) #Visualizes the RFECV
 
     data_rfecv, rfecv, selected_features = rfecv_data(df_processed,df_label) #Applies RFECV
     

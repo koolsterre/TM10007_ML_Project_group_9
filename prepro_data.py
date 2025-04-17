@@ -24,7 +24,6 @@ The function processing_data_rfecv applies:
 '''
 
 import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import preprocessing
@@ -33,9 +32,6 @@ from sklearn.feature_selection import VarianceThreshold
 from sklearn import feature_selection
 from sklearn import model_selection
 from sklearn import svm
-# from sklearn import metrics
-# from sklearn import neighbors
-
 
 def split_data(data):
     '''
@@ -282,7 +278,7 @@ def processing_data_rfecv(data):
     data_selection, data_id, df_label = split_data(data) #Splits the data and the label
 
     data_threshold, variance_data, selected_columns = variance_threshold(data_selection) #Variance threshold
-    data_variance = pd.DataFrame(data_threshold, columns=selected_columns, index=data_selection.index) 
+    data_variance = pd.DataFrame(data_threshold, columns=selected_columns, index=data_selection.index)
     #Creates a dataframe with original column names
 
     data_correlation, drop_correlation = correlation_data(data_variance) #Removes highly correlated data

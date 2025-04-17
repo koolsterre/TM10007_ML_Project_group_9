@@ -1,47 +1,63 @@
-import numpy as np
-from scipy.stats import zscore
-import pandas as pd
 
-def outlier_detection(data):
-    drempel = 3
-    total_outliers = 0
-    for column in data.select_dtypes(include=[np.number]).columns:
+def replace_outliers(data_train):
+    # Alleen numerieke kolommen
+    numeric_cols = data_train.select_dtypes(include=['number'])
+    total_capped = 0
+    # Pas outliers direct aan in df
+    for col in numeric_cols.columns:
+        data = data_train[col].dropna()
 
-        z_scores = zscore(data[column])
-        mean_value = data[column].mean()
-        std_value = data[column].std()
+        Q1 = data.quantile(0.25)
+        Q3 = data.quantile(0.75)
+        IQR = Q3 - Q1
 
-        outliers = abs(z_scores) > drempel
+        lower_bound = Q1 - 3 * IQR
+        upper_bound = Q3 + 3 * IQR
 
-    # Vervang de outliers met de grenswaarden
-        data.loc[outliers,column] = np.clip(data.loc[outliers,column], mean_value - drempel * std_value, mean_value + drempel * std_value)
-        total_outliers += outliers.sum()
+        # Boolean mask voor outliers
+        lower_outliers = data_train[col] < lower_bound
+        upper_outliers = data_train[col] > upper_bound
+        capped_count = lower_outliers.sum() + upper_outliers.sum()
 
-    return data, total_outliers
+        # Update total
+        total_capped += capped_count
 
+        # Winsorize in-place met .apply()
+        data_train[col] = data_train[col].apply(lambda x: 
+            lower_bound if x < lower_bound else
+            upper_bound if x > upper_bound else
+            x
+        )
+    return data_train, total_capped, lower_bound, upper_bound
 
-def outlier_detection_test(data_train, data_test):
-    drempel = 3
-    total_outliers_test = 0
-    for column in data_train.select_dtypes(include=[np.number]).columns:
+def replace_outliers_test(data_train, data_test, lower_bound, upper_bound):
+    # Alleen numerieke kolommen
+    numeric_cols = data_test.select_dtypes(include=['number'])
+    total_capped_test = 0
+    # Pas outliers direct aan in df
+    for col in numeric_cols.columns:
+        data = data_train[col].dropna()
 
-        mean_value = data_train[column].mean()
-        std_value = data_train[column].std()
+        Q1 = data.quantile(0.25)
+        Q3 = data.quantile(0.75)
+        IQR = Q3 - Q1
+
+        lower_bound = Q1 - 3 * IQR
+        upper_bound = Q3 + 3 * IQR
+
+        # Boolean mask voor outliers
+        lower_outliers = data_test[col] < lower_bound
+        upper_outliers = data_test[col] > upper_bound
+        capped_count = lower_outliers.sum() + upper_outliers.sum()
+
+        # Update total
+        total_capped_test += capped_count
+
+        # Winsorize in-place met .apply()
+        data_test[col] = data_test[col].apply(lambda x: 
+            lower_bound if x < lower_bound else
+            upper_bound if x > upper_bound else
+            x
+        )
+    return data_test, total_capped_test
     
-        z_scores = list()
-        for i in data_test.index:
-            data_value = data_test.loc[i,column]
-            if std_value == 0:
-                z_score = 0
-            else:
-                z_score = abs((data_value - mean_value)/std_value)
-            z_scores.append(z_score)
-
-        z_scores_series = pd.Series(z_scores,index=data_test.index) #Create a Series with the z-scores, using the mean and STD of train_data
-        outliers = z_scores_series > drempel #Detecting outliers
-
-    # Vervang de outliers met de grenswaarden
-        data_test.loc[outliers,column] = np.clip(data_test.loc[outliers,column], mean_value - drempel * std_value, mean_value + drempel * std_value)
-        total_outliers_test += outliers.sum()
-
-    return data_test, total_outliers_test

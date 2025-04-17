@@ -42,7 +42,7 @@ def merge_data(data_selection, data_id, df_label, data_processed):
 
     #Merge the label and processed data DataFrames
     data_merged = pd.merge(df_label, df_processed, on='ID')
-    return data_merged, df_label, df_processed
+    return df_label, df_processed
 
 def merge_data_nonames(data_id, df_label, data_processed):
     '''
@@ -56,7 +56,7 @@ def merge_data_nonames(data_id, df_label, data_processed):
 
     #Merge the label and processed data DataFrames
     data_merged = pd.merge(df_label, df_processed, on='ID')
-    return data_merged, df_label, df_processed
+    return df_label, df_processed
 
 
 def scale_data(data_selection, scaler=preprocessing.StandardScaler()):
@@ -148,12 +148,12 @@ def processing_data_scaling(data):
 
     data_correlation, drop_correlation = correlation_data(data_variance) #Removes highly correlated data
 
-    data_scaled, scaler = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scale the data
+    data_scaled, scaler = scale_data(data_correlation, scaler=preprocessing.MinMaxScaler()) #Scale the data
 
-    data_merged, df_label, df_processed = merge_data(data_correlation, data_id, df_label, data_scaled)
+    df_label, df_processed = merge_data(data_correlation, data_id, df_label, data_scaled)
     #Merges the processed data and the label
 
-    return data_merged, df_label, df_processed, variance_data, selected_columns, drop_correlation, scaler
+    return df_label, df_processed, variance_data, selected_columns, drop_correlation, scaler
 
 def processing_data_scaling_test(data_test, variance_data, selected_columns, drop_correlation, scaler):
     '''This function processes the data.
@@ -168,9 +168,9 @@ def processing_data_scaling_test(data_test, variance_data, selected_columns, dro
 
     data_test_scaled = scaler.transform(data_test_correlation) #Scales the data using the train data
 
-    data_merged, df_label, df_processed = merge_data(data_test_correlation, data_id, df_label, data_test_scaled) #Merges the data
+    df_label, df_processed = merge_data(data_test_correlation, data_id, df_label, data_test_scaled) #Merges the data
 
-    return data_merged, df_label, df_processed
+    return df_label, df_processed
 
 
 def processing_data_pca(data):
@@ -190,9 +190,9 @@ def processing_data_pca(data):
 
     data_pca, pca = pca_data(data_scaled) #Reduce dimensions
 
-    data_merged, df_label, df_processed = merge_data_nonames(data_id, df_label, data_pca)
+    df_label, df_processed = merge_data_nonames(data_id, df_label, data_pca)
     #Merges the processed data and the label
-    return data_merged, df_label, df_processed, variance_data, selected_columns, drop_correlation, scaler, pca
+    return df_label, df_processed, variance_data, selected_columns, drop_correlation, scaler, pca
 
 def processing_data_pca_test(data_test, variance_data, selected_columns, drop_correlation, scaler, pca):
     '''This function processes the data.
@@ -209,9 +209,9 @@ def processing_data_pca_test(data_test, variance_data, selected_columns, drop_co
 
     data_test_pca = pca.transform(data_test_scaled) #Fits the PCA
 
-    data_merged, df_label, df_processed = merge_data_nonames(data_id, df_label, data_test_pca) #Merges the data
+    df_label, df_processed = merge_data_nonames(data_id, df_label, data_test_pca) #Merges the data
 
-    return data_merged, df_label, df_processed
+    return df_label, df_processed
 
 
 def processing_data_rfecv(data):
@@ -229,10 +229,10 @@ def processing_data_rfecv(data):
 
     data_scaled, scaler = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scale the data
 
-    data_merged, df_label, df_processed = merge_data(data_correlation, data_id, df_label, data_scaled)
+    df_label, df_processed = merge_data(data_correlation, data_id, df_label, data_scaled)
     #Merges the processed data and the label
     data_rfecv, rfecv, selected_features = rfecv_data(df_processed,df_label)
-    return data_rfecv, df_label, df_processed, variance_data, selected_columns, drop_correlation, scaler, rfecv, selected_features
+    return data_rfecv, df_label, variance_data, selected_columns, drop_correlation, scaler, rfecv, selected_features
 
 def processing_data_rfecv_test(data_test, variance_data, selected_columns, drop_correlation, scaler, rfecv, selected_features):
     '''This function processes the data.
@@ -248,8 +248,8 @@ def processing_data_rfecv_test(data_test, variance_data, selected_columns, drop_
 
     data_test_scaled = scaler.transform(data_test_correlation) #Scales the data using the train data
 
-    data_merged, df_label, df_processed = merge_data(data_test_correlation, data_id, df_label, data_test_scaled) #Merges the data
+    df_label, df_processed = merge_data(data_test_correlation, data_id, df_label, data_test_scaled) #Merges the data
 
     data_test_rfecv = pd.DataFrame(rfecv.transform(df_processed), columns=selected_features, index=df_processed.index) #Fits the RFECV
 
-    return data_test_rfecv, df_label, df_processed
+    return data_test_rfecv, df_label

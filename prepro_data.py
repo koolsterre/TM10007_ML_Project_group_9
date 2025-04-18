@@ -68,7 +68,7 @@ def merge_data_nonames(data_id, df_label, data_processed):
     The column names are not added.
     '''
     #Create a dataframe with the processed data
-    df_processed = pd.DataFrame(data_processed) #, columns=data_selection.columns
+    df_processed = pd.DataFrame(data_processed)
     df_processed.insert(0, 'ID', data_id.values)  #Inserts a column with the ID
     df_processed = df_processed.set_index(df_processed.columns[0]) #Sets the ID column as the index
 
@@ -84,8 +84,8 @@ def scale_data(data_selection, scaler=preprocessing.StandardScaler()):
 
     It returns a dataframe with the scaled data, and the scaler.
     '''
-    scaler.fit(data_selection)
-    data_scaled = scaler.transform(data_selection)
+    scaler.fit(data_selection) #Fits the scaler
+    data_scaled = scaler.transform(data_selection) #Transforms the data
     return data_scaled, scaler
 
 
@@ -95,9 +95,9 @@ def variance_threshold(data, variance_threshold=0.1):
 
     The data with the features removed, and the selector and selected columns (to apply it to the test data) are returned.
     '''
-    selector = VarianceThreshold(threshold=variance_threshold)  # Set the threshold
-    data_threshold = selector.fit_transform(data)
-    selected_columns = data.columns[selector.get_support()]
+    selector = VarianceThreshold(threshold=variance_threshold)  #Sets the threshold
+    data_threshold = selector.fit_transform(data) #Fits the data
+    selected_columns = data.columns[selector.get_support()] #Gets the selected columns
 
     return data_threshold, selector, selected_columns
 
@@ -109,15 +109,15 @@ def correlation_data(data, correlation_threshold=0.9):
     A dataframe with the features removed is returned, as well as to_drop to apply it to the test data.
     '''
     df_data = pd.DataFrame(data)
-    corr_matrix = df_data.corr().abs()
+    corr_matrix = df_data.corr().abs() #Calculates the correlation matrix
 
-    to_drop = set()
+    to_drop = set() 
     for column in corr_matrix.columns:
         for correlated_column in corr_matrix.columns:
             if column != correlated_column and corr_matrix.at[column, correlated_column] > correlation_threshold:
-                to_drop.add(correlated_column)
+                to_drop.add(correlated_column) #Creates the set of columns to drop
                 break
-    data_correlation = df_data.drop(columns=to_drop)
+    data_correlation = df_data.drop(columns=to_drop) #Removes the columns with high correlation
 
     return data_correlation, to_drop
 
@@ -128,8 +128,8 @@ def pca_data(data):
     The number of components is such that the 95% of the variance is retained.
     '''
     pca = decomposition.PCA(n_components=0.95)
-    pca.fit(data)
-    data_pca = pca.transform(data)
+    pca.fit(data) #Fits the PCA
+    data_pca = pca.transform(data) #Transforms the data
 
     return data_pca, pca
 
@@ -144,9 +144,10 @@ def visualize_rfecv(data,labels):
         cv=model_selection.StratifiedKFold(4),
         scoring='roc_auc',
         min_features_to_select=1)
-    labels = labels.values.ravel() #Makes a 1d array
-    rfecv.fit(data, labels) #Fits the rfecv
+    labels = labels.values.ravel() #Makes a 1D array
+    rfecv.fit(data, labels) #Fits the RFECV
 
+    #Plot the RFECV number of features selected
     plt.figure()
     plt.xlabel("Number of features selected")
     plt.ylabel("Cross validation score (nb of correct classifications)")
@@ -168,11 +169,11 @@ def rfecv_data(data,labels, features_select=15):
         cv=model_selection.StratifiedKFold(4),
         scoring='roc_auc',
         min_features_to_select=features_select)
-    labels = labels.values.ravel() #Makes a 1d array
-    rfecv.fit(data, labels) #Fits the rfecv
+    labels = labels.values.ravel() #Makes a 1D array
+    rfecv.fit(data, labels) #Fits the RFECV
 
     selected_features = data.columns[rfecv.support_] #Gets the best number of features
-    data_rfecv = pd.DataFrame(rfecv.transform(data), columns=selected_features, index=data.index)
+    data_rfecv = pd.DataFrame(rfecv.transform(data), columns=selected_features, index=data.index) #Creates a dataframe with the selected features
     return data_rfecv, rfecv, selected_features
 
 
@@ -190,13 +191,13 @@ def processing_data_scaling(data):
     '''
     data_selection, data_id, df_label = split_data(data) #Splits the data and the label
 
-    data_threshold, variance_data, selected_columns = variance_threshold(data_selection) #Variance threshold
-    data_variance = pd.DataFrame(data_threshold, columns=selected_columns, index=data_selection.index) 
+    data_threshold, variance_data, selected_columns = variance_threshold(data_selection) #Applies the variance threshold
+    data_variance = pd.DataFrame(data_threshold, columns=selected_columns, index=data_selection.index)
     #Creates a dataframe with original column names
 
     data_correlation, drop_correlation = correlation_data(data_variance) #Removes highly correlated data
 
-    data_scaled, scaler = scale_data(data_correlation, scaler=preprocessing.MinMaxScaler()) #Scale the data
+    data_scaled, scaler = scale_data(data_correlation, scaler=preprocessing.MinMaxScaler()) #Scales the data
 
     df_label, df_processed = merge_data(data_correlation, data_id, df_label, data_scaled)
     #Merges the processed data and the label
@@ -240,15 +241,15 @@ def processing_data_pca(data):
     '''
     data_selection, data_id, df_label = split_data(data) #Splits the data and the label
 
-    data_threshold, variance_data, selected_columns = variance_threshold(data_selection) #Variance threshold
-    data_variance = pd.DataFrame(data_threshold, columns=selected_columns, index=data_selection.index) 
+    data_threshold, variance_data, selected_columns = variance_threshold(data_selection) #Applies the variance threshold
+    data_variance = pd.DataFrame(data_threshold, columns=selected_columns, index=data_selection.index)
     #Creates a dataframe with original column names
 
     data_correlation, drop_correlation = correlation_data(data_variance) #Removes highly correlated data
 
-    data_scaled, scaler = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scale the data
+    data_scaled, scaler = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scales the data
 
-    data_pca, pca = pca_data(data_scaled) #Reduce dimensions
+    data_pca, pca = pca_data(data_scaled) #Reduces dimensions
 
     df_label, df_processed = merge_data_nonames(data_id, df_label, data_pca)
     #Merges the processed data and the label
@@ -293,20 +294,20 @@ def processing_data_rfecv(data):
     '''
     data_selection, data_id, df_label = split_data(data) #Splits the data and the label
 
-    data_threshold, variance_data, selected_columns = variance_threshold(data_selection) #Variance threshold
+    data_threshold, variance_data, selected_columns = variance_threshold(data_selection) #Applies the variance threshold
     data_variance = pd.DataFrame(data_threshold, columns=selected_columns, index=data_selection.index)
     #Creates a dataframe with original column names
 
     data_correlation, drop_correlation = correlation_data(data_variance) #Removes highly correlated data
 
-    data_scaled, scaler = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scale the data
+    data_scaled, scaler = scale_data(data_correlation, scaler=preprocessing.StandardScaler()) #Scales the data
 
     df_label, df_processed = merge_data(data_correlation, data_id, df_label, data_scaled)
     #Merges the processed data and the label
 
     visualize_rfecv(df_processed, df_label) #Visualizes the RFECV
 
-    data_rfecv, rfecv, selected_features = rfecv_data(df_processed,df_label) #Applies RFECV
+    data_rfecv, rfecv, selected_features = rfecv_data(df_processed,df_label) #Applies the RFECV
     
     return data_rfecv, df_label, variance_data, selected_columns, drop_correlation, scaler, rfecv, selected_features
 

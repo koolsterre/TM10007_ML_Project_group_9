@@ -1,4 +1,15 @@
+'''
+This module contains functions to identify and replace outliers in a dataset using the Interquartile Range (IQR) method.
+The `replace_outliers` function identifies outliers in the training data and replaces them with the lower and upper bounds.
+The `replace_outliers_test` function applies the same bounds to the test data.
+'''
+
 def replace_outliers(data_train):
+    '''
+    This function replaces outliers in the training data with the lower and upper bounds.
+    It uses the IQR method to calculate the bounds and replaces values outside of these bounds.
+    The function returns the modified training data, the total number of capped values, and the lower and upper bounds.
+    '''
     #Select only numeric columns
     numeric_cols = data_train.select_dtypes(include=['number'])
     total_capped = 0
@@ -30,6 +41,11 @@ def replace_outliers(data_train):
     return data_train, total_capped, lower_bound, upper_bound
  
 def replace_outliers_test(data_train, data_test, lower_bound, upper_bound):
+    '''
+    This function replaces outliers in the test data with the lower and upper bounds.
+    It uses the IQR method to calculate the bounds based on the training data and replaces values outside of these bounds.
+    The function returns the modified test data and the total number of capped values.
+    '''
     #Select only numeric columns
     numeric_cols = data_test.select_dtypes(include=['number'])
     total_capped_test = 0

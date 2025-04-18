@@ -151,7 +151,7 @@ def visualize_rfecv(data,labels):
     plt.xlabel("Number of features selected")
     plt.ylabel("Cross validation score (nb of correct classifications)")
     plt.plot(range(1, len(rfecv.cv_results_["mean_test_score"]) + 1), rfecv.cv_results_["mean_test_score"])
-    plt.axvline(18, color='red', linestyle='--', label=f'Selected features: {rfecv.n_features_}')
+    plt.axvline(24, color='red', linestyle='--', label=f'Selected features: {rfecv.n_features_}')
     plt.show()
 
 def rfecv_data(data,labels, features_select=15):
